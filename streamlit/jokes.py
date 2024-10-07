@@ -3,6 +3,7 @@ import string
 from collections import Counter
 
 import matplotlib.pyplot as plt
+import altair as alt
 import nltk
 import pandas as pd
 from nltk.corpus import stopwords
@@ -63,20 +64,21 @@ def reset_buttons():
     st.session_state["show_top10"] = False
 
 
-# Función para generar el gráfico de barras personalizado
-def generate_bar_chart(df_common_words):
-    df_common_words = df_common_words.sort_values(by="Frecuencia", ascending=False)
+# Función para generar gráfico de barras con altair
+def generate_altair_bar_chart(df_common_words):
+    chart = (
+        alt.Chart(df_common_words)
+        .mark_bar()
+        .encode(
+            x=alt.X("Palabra:N", sort="-y", title="Palabra"),
+            y=alt.Y("Frecuencia:Q", title="Frecuencia"),
+            tooltip=["Palabra", "Frecuencia"],
+        )
+        .properties(width=600, height=400)
+        .configure_axis(labelFontSize=12)
+    )
 
-    plt.figure(figsize=(10, 6))
-    plt.bar(df_common_words["Palabra"], df_common_words["Frecuencia"], color="skyblue")
-
-    # Aumentar el tamaño de las etiquetas del eje x
-    plt.xticks(rotation=45, ha="right", fontsize=12)
-    plt.ylabel("Frecuencia")
-    plt.xlabel("Palabra")
-    plt.title("Top 10 Palabras más Frecuentes")
-
-    st.pyplot(plt)
+    st.altair_chart(chart, use_container_width=True)
 
 
 # Función principal de la app
@@ -194,10 +196,13 @@ def main():
             word_counts = Counter(all_words)
             common_words = word_counts.most_common(10)
             if common_words:
+                # Crear DataFrame y ordenar por frecuencia
                 df_common_words = pd.DataFrame(
                     common_words, columns=["Palabra", "Frecuencia"]
                 )
-                generate_bar_chart(df_common_words)  # Usar gráfico personalizado
+
+                # Generar gráfico usando Altair
+                generate_altair_bar_chart(df_common_words)
             else:
                 st.write("No hay palabras suficientes para mostrar el conteo.")
 
