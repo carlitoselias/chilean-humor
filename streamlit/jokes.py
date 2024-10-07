@@ -1,12 +1,14 @@
+import re
 import string
 from collections import Counter
 
 import matplotlib.pyplot as plt
 import nltk
 import pandas as pd
-import streamlit as st
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
+
+import streamlit as st
 
 # Descargar stopwords de nltk si es necesario
 # nltk.download('stopwords')
@@ -40,7 +42,7 @@ def generate_wordcloud(text):
 def load_data():
     # Cargar el dataset desde archivo CSV o formato adecuado
     # Asegúrate de cambiar la ruta del archivo a la que corresponda
-    data = pd.read_csv("../data/jokes.csv")
+    data = pd.read_csv("jokes_df.csv")
     return data
 
 
@@ -48,11 +50,8 @@ def load_data():
 def main():
     st.title("Análisis de Chistes por Evento y Show")
 
-    # Cargar los datos
-    data = load_data()
-
     # Inicializar las listas de eventos y artistas (shows)
-    event_names = data["event_name"].unique()
+    event_names = data["edicion"].unique()
     show_names = data["show_name"].unique()
 
     # Selección de filtros
@@ -60,9 +59,7 @@ def main():
 
     # Si se selecciona un evento, filtrar los shows disponibles
     if selected_event != "Todos":
-        available_shows = data[data["event_name"] == selected_event][
-            "show_name"
-        ].unique()
+        available_shows = data[data["edicion"] == selected_event]["show_name"].unique()
     else:
         available_shows = show_names
 
@@ -73,11 +70,10 @@ def main():
     # Filtrar los datos según la selección
     if selected_event != "Todos" and selected_show != "Todos":
         filtered_data = data[
-            (data["event_name"] == selected_event)
-            & (data["show_name"] == selected_show)
+            (data["edicion"] == selected_event) & (data["show_name"] == selected_show)
         ]
     elif selected_event != "Todos":
-        filtered_data = data[data["event_name"] == selected_event]
+        filtered_data = data[data["edicion"] == selected_event]
     elif selected_show != "Todos":
         filtered_data = data[data["show_name"] == selected_show]
     else:
