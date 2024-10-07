@@ -63,6 +63,22 @@ def reset_buttons():
     st.session_state["show_top10"] = False
 
 
+# Función para generar el gráfico de barras personalizado
+def generate_bar_chart(df_common_words):
+    df_common_words = df_common_words.sort_values(by="Frecuencia", ascending=False)
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(df_common_words["Palabra"], df_common_words["Frecuencia"], color="skyblue")
+
+    # Aumentar el tamaño de las etiquetas del eje x
+    plt.xticks(rotation=45, ha="right", fontsize=12)
+    plt.ylabel("Frecuencia")
+    plt.xlabel("Palabra")
+    plt.title("Top 10 Palabras más Frecuentes")
+
+    st.pyplot(plt)
+
+
 # Función principal de la app
 def main():
     st.title("Análisis de chistes por festival y humorista")
@@ -181,7 +197,7 @@ def main():
                 df_common_words = pd.DataFrame(
                     common_words, columns=["Palabra", "Frecuencia"]
                 )
-                st.bar_chart(df_common_words.set_index("Palabra"))
+                generate_bar_chart(df_common_words)  # Usar gráfico personalizado
             else:
                 st.write("No hay palabras suficientes para mostrar el conteo.")
 
