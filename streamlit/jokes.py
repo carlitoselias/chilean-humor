@@ -42,7 +42,7 @@ def generate_wordcloud(text):
 def load_data():
     # Cargar el dataset desde archivo CSV o formato adecuado
     # Asegúrate de cambiar la ruta del archivo a la que corresponda
-    data = pd.read_csv("jokes_df.csv")
+    data = pd.read_csv("streamlit/jokes_df.csv")
     return data
 
 
