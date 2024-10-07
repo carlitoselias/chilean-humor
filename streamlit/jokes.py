@@ -14,15 +14,26 @@ import streamlit as st
 # nltk.download('stopwords')
 
 
-# Función para limpiar y procesar el texto
-def clean_text(text):
+# Función para limpiar y procesar el texto con stopwords adicionales y longitud mínima de palabra
+def clean_text(text, extra_stopwords, min_word_length):
     text = text.lower()  # Convertir a minúsculas
     text = "".join(
         [char for char in text if char not in string.punctuation]
     )  # Quitar puntuación
     tokens = text.split()  # Tokenizar
-    stop_words = set(stopwords.words("spanish"))  # Filtrar stopwords en español
-    tokens = [word for word in tokens if word not in stop_words]
+
+    # Cargar stopwords en español y añadir las personalizadas
+    stop_words = set(stopwords.words("spanish"))
+    if extra_stopwords:
+        stop_words.update(extra_stopwords)
+
+    # Filtrar stopwords y palabras más cortas que min_word_length
+    tokens = [
+        word
+        for word in tokens
+        if word not in stop_words and len(word) >= min_word_length
+    ]
+
     return tokens
 
 
@@ -40,31 +51,44 @@ def generate_wordcloud(text):
 # Cargar el dataset
 @st.cache_data
 def load_data():
-    # Cargar el dataset desde archivo CSV o formato adecuado
-    # Asegúrate de cambiar la ruta del archivo a la que corresponda
-    data = pd.read_csv("streamlit/jokes_df.csv")
+    data = pd.read_csv("jokes_df.csv")  # Ruta del archivo
     return data
+
+
+# Función para reiniciar el estado de los botones
+def reset_buttons():
+    st.session_state["show_df"] = False
+    st.session_state["clean_df"] = False
+    st.session_state["show_wordcloud"] = False
+    st.session_state["show_top10"] = False
 
 
 # Función principal de la app
 def main():
-    st.title("Análisis de Chistes por Evento y Show")
+    st.title("Análisis de chistes por festival y humorista")
+
+    # Cargar los datos
+    data = load_data()
 
     # Inicializar las listas de eventos y artistas (shows)
     event_names = data["edicion"].unique()
     show_names = data["show_name"].unique()
 
-    # Selección de filtros
-    selected_event = st.selectbox("Selecciona un Evento", ["Todos"] + list(event_names))
+    # Inicializar el estado de los botones si no existen
+    if "show_df" not in st.session_state:
+        reset_buttons()
 
-    # Si se selecciona un evento, filtrar los shows disponibles
+    # Selección de filtros
+    selected_event = st.selectbox(
+        "Selecciona un festival", ["Todos"] + list(event_names)
+    )
     if selected_event != "Todos":
         available_shows = data[data["edicion"] == selected_event]["show_name"].unique()
     else:
         available_shows = show_names
 
     selected_show = st.selectbox(
-        "Selecciona un Show", ["Todos"] + list(available_shows)
+        "Selecciona un humorista", ["Todos"] + list(available_shows)
     )
 
     # Filtrar los datos según la selección
@@ -79,30 +103,87 @@ def main():
     else:
         filtered_data = data
 
-    # Mostrar el dataset filtrado
-    st.subheader("Dataset Filtrado")
-    st.write(filtered_data)
+    # Agregar cuadro de texto para nuevas stopwords
+    st.subheader("Agregar Stopwords Personalizadas")
+    custom_stopwords = st.text_input(
+        "Escribe nuevas stopwords separadas por comas"
+    ).split(",")
+    custom_stopwords = [
+        word.strip() for word in custom_stopwords if word
+    ]  # Limpiar input
+
+    # Agregar slider para la longitud mínima de palabras
+    min_word_length = st.slider(
+        "Selecciona la longitud mínima de las palabras a considerar", 1, 10, 3
+    )
+
+    # Si se cambia algún parámetro (evento, show, stopwords, longitud de palabras), resetear los botones
+    if st.button("Aplicar Cambios"):
+        reset_buttons()
+
+    # Mostrar el dataset original
+    if not st.session_state["show_df"]:
+        if st.button("Mostrar Dataset Original"):
+            st.session_state["show_df"] = True
+
+    # Mostrar el dataset filtrado (si ya se activó el botón correspondiente)
+    if st.session_state["show_df"]:
+        st.subheader("Dataset Filtrado")
+        st.write(filtered_data)
 
     # Limpiar y procesar el texto de los chistes filtrados
-    chistes = filtered_data["text"].apply(clean_text)
+    if st.session_state["show_df"] and not st.session_state["clean_df"]:
+        if st.button("Limpiar Dataset"):
+            st.session_state["clean_df"] = True
+            st.session_state["chistes_limpios"] = filtered_data["text"].apply(
+                lambda x: clean_text(x, custom_stopwords, min_word_length)
+            )
 
-    # Wordcloud basado en los datos filtrados
-    st.subheader(f"Wordcloud de Chistes: {selected_event} - {selected_show}")
-    all_words = [word for chiste in chistes for word in chiste]
-    if all_words:  # Si hay palabras para mostrar
-        generate_wordcloud(all_words)
-    else:
-        st.write("No hay chistes disponibles para este filtro.")
+    # Mostrar el dataset limpio
+    if st.session_state["clean_df"]:
+        st.subheader("Dataset Filtrado y Limpio")
+        st.write(st.session_state["chistes_limpios"])
 
-    # Conteo de palabras más comunes
-    st.subheader("Palabras más frecuentes")
-    word_counts = Counter(all_words)
-    common_words = word_counts.most_common(10)
-    if common_words:
-        df_common_words = pd.DataFrame(common_words, columns=["Palabra", "Frecuencia"])
-        st.bar_chart(df_common_words.set_index("Palabra"))
-    else:
-        st.write("No hay palabras suficientes para mostrar el conteo.")
+    # Generar y mostrar wordcloud
+    if st.session_state["clean_df"] and not st.session_state["show_wordcloud"]:
+        if st.button("Mostrar Wordcloud"):
+            st.session_state["show_wordcloud"] = True
+
+    if st.session_state["show_wordcloud"]:
+        st.subheader(f"Wordcloud de Chistes: {selected_event} - {selected_show}")
+        if st.session_state["chistes_limpios"] is not None:
+            all_words = [
+                word
+                for chiste in st.session_state["chistes_limpios"]
+                for word in chiste
+            ]
+            if all_words:
+                generate_wordcloud(all_words)
+            else:
+                st.write("No hay chistes disponibles para este filtro.")
+
+    # Generar y mostrar el gráfico de las 10 palabras más comunes
+    if st.session_state["show_wordcloud"] and not st.session_state["show_top10"]:
+        if st.button("Top 10 Palabras"):
+            st.session_state["show_top10"] = True
+
+    if st.session_state["show_top10"]:
+        st.subheader("Palabras más frecuentes")
+        if st.session_state["chistes_limpios"] is not None:
+            all_words = [
+                word
+                for chiste in st.session_state["chistes_limpios"]
+                for word in chiste
+            ]
+            word_counts = Counter(all_words)
+            common_words = word_counts.most_common(10)
+            if common_words:
+                df_common_words = pd.DataFrame(
+                    common_words, columns=["Palabra", "Frecuencia"]
+                )
+                st.bar_chart(df_common_words.set_index("Palabra"))
+            else:
+                st.write("No hay palabras suficientes para mostrar el conteo.")
 
 
 if __name__ == "__main__":
