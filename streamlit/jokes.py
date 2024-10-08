@@ -66,7 +66,7 @@ def load_data():
     )  # Ruta completa al archivo CSV
 
     # Cargar los datos
-    data = pd.read_csv(file_path)
+    data = pd.read_csv(file_path, dtype={"decada": str})
     return data
 
 
@@ -76,6 +76,18 @@ def reset_buttons():
     st.session_state["clean_df"] = False
     st.session_state["show_wordcloud"] = False
     st.session_state["show_top10"] = False
+
+
+# Inicializar las claves de session_state si no existen
+def initialize_session_state():
+    if "show_df" not in st.session_state:
+        st.session_state["show_df"] = False
+    if "clean_df" not in st.session_state:
+        st.session_state["clean_df"] = False
+    if "show_wordcloud" not in st.session_state:
+        st.session_state["show_wordcloud"] = False
+    if "show_top10" not in st.session_state:
+        st.session_state["show_top10"] = False
 
 
 # Función para generar gráfico de barras con altair
@@ -97,43 +109,53 @@ def generate_altair_bar_chart(df_common_words):
 
 # Función principal de la app
 def main():
-    st.title("Análisis de chistes por festival y humorista")
+    st.title("Análisis de chistes por festival, humorista y década")
+
+    # Inicializar el estado de session_state
+    initialize_session_state()
 
     # Cargar los datos
     data = load_data()
 
-    # Inicializar las listas de eventos y artistas (shows)
-    event_names = data["edicion"].unique()
-    show_names = data["show_name"].unique()
-
-    # Inicializar el estado de los botones si no existen
-    if "show_df" not in st.session_state:
-        reset_buttons()
-
-    # Selección de filtros
-    selected_event = st.selectbox(
-        "Selecciona un festival", ["Todos"] + list(event_names)
+    # Filtrar por década
+    decades = sorted(data["decada"].unique())
+    selected_decades = st.multiselect(
+        "Selecciona una o más décadas",
+        ["Todos"] + decades,  # Añadir 'Todos' al inicio de la lista ordenada
+        default="Todos",
     )
-    if selected_event != "Todos":
-        available_shows = data[data["edicion"] == selected_event]["show_name"].unique()
+    if "Todos" in selected_decades:
+        filtered_by_decade = data
     else:
-        available_shows = show_names
+        filtered_by_decade = data[data["decada"].isin(selected_decades)]
 
-    selected_show = st.selectbox(
-        "Selecciona un humorista", ["Todos"] + list(available_shows)
+    # Filtrar por festival basado en la selección de década
+    event_names = sorted(filtered_by_decade["edicion"].unique())
+    selected_events = st.multiselect(
+        "Selecciona uno o más festivales",
+        ["Todos"] + event_names,  # Añadir 'Todos' al inicio de la lista ordenada
+        default="Todos",
     )
-
-    # Filtrar los datos según la selección
-    if selected_event != "Todos" and selected_show != "Todos":
-        filtered_data = data[
-            (data["edicion"] == selected_event) & (data["show_name"] == selected_show)
+    if "Todos" in selected_events:
+        filtered_by_event = filtered_by_decade
+    else:
+        filtered_by_event = filtered_by_decade[
+            filtered_by_decade["edicion"].isin(selected_events)
         ]
-    elif selected_event != "Todos":
-        filtered_data = data[data["edicion"] == selected_event]
-    elif selected_show != "Todos":
-        filtered_data = data[data["show_name"] == selected_show]
+
+    # Filtrar por humorista basado en la selección de festival
+    show_names = sorted(filtered_by_event["show_name"].unique())
+    selected_shows = st.multiselect(
+        "Selecciona uno o más humoristas",
+        ["Todos"] + show_names,  # Añadir 'Todos' al inicio de la lista ordenada
+        default="Todos",
+    )
+    if "Todos" in selected_shows:
+        filtered_data = filtered_by_event
     else:
-        filtered_data = data
+        filtered_data = filtered_by_event[
+            filtered_by_event["show_name"].isin(selected_shows)
+        ]
 
     # Agregar cuadro de texto para nuevas stopwords
     custom_stopwords = st.text_input(
@@ -218,6 +240,22 @@ def main():
                 generate_altair_bar_chart(df_common_words)
             else:
                 st.write("No hay palabras suficientes para mostrar el conteo.")
+
+    # Generar archivo CSV con todas las palabras y sus frecuencias
+    if st.session_state["clean_df"]:
+        all_words = [
+            word for chiste in st.session_state["chistes_limpios"] for word in chiste
+        ]
+        word_counts = Counter(all_words)
+        word_df = pd.DataFrame(word_counts.items(), columns=["Palabra", "Frecuencia"])
+
+        # Botón para descargar CSV
+        st.download_button(
+            label="Descargar lista de palabras con frecuencias",
+            data=word_df.to_csv(index=False),
+            file_name="frecuencia_palabras.csv",
+            mime="text/csv",
+        )
 
 
 if __name__ == "__main__":
