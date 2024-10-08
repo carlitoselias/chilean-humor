@@ -12,15 +12,6 @@ from wordcloud import WordCloud
 
 import streamlit as st
 
-"""
-altair==5.4.1
-matplotlib==3.9.2
-nltk==3.9.1
-pandas==2.2.3
-streamlit==1.39.0
-wordcloud==1.9.3
-"""
-
 # Descargar stopwords de nltk si es necesario
 nltk.download("stopwords")
 
