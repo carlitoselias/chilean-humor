@@ -2,14 +2,23 @@ import re
 import string
 from collections import Counter
 
-import matplotlib.pyplot as plt
 import altair as alt
+import matplotlib.pyplot as plt
 import nltk
 import pandas as pd
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
 
 import streamlit as st
+
+"""
+altair==5.4.1
+matplotlib==3.9.2
+nltk==3.9.1
+pandas==2.2.3
+streamlit==1.39.0
+wordcloud==1.9.3
+"""
 
 # Descargar stopwords de nltk si es necesario
 # nltk.download('stopwords')
@@ -145,7 +154,7 @@ def main():
 
     # Mostrar el dataset filtrado (si ya se activó el botón correspondiente)
     if st.session_state["show_df"]:
-        st.subheader("Datos originales sin limpiar")
+        st.subheader("Dataset original sin limpiar")
         st.write(filtered_data)
 
     # Limpiar y procesar el texto de los chistes filtrados
@@ -167,7 +176,7 @@ def main():
             st.session_state["show_wordcloud"] = True
 
     if st.session_state["show_wordcloud"]:
-        st.subheader(f"Wordcloud de chistes: {selected_event} - {selected_show}")
+        st.subheader(f"Wordcloud de chistes")
         if st.session_state["chistes_limpios"] is not None:
             all_words = [
                 word
