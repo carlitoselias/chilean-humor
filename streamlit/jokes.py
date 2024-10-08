@@ -109,7 +109,7 @@ def generate_altair_bar_chart(df_common_words):
 
 # Función principal de la app
 def main():
-    st.title("Análisis de chistes por festival, humorista y década")
+    st.title("6 decadas de humor en el Festival Internacional de Viña del Mar")
 
     # Inicializar el estado de session_state
     initialize_session_state()
