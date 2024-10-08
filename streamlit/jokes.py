@@ -22,7 +22,7 @@ wordcloud==1.9.3
 """
 
 # Descargar stopwords de nltk si es necesario
-# nltk.download('stopwords')
+nltk.download("stopwords")
 
 
 # Función para limpiar y procesar el texto con stopwords adicionales y longitud mínima de palabra
