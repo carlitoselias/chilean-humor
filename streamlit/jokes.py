@@ -61,7 +61,7 @@ def generate_wordcloud(text):
 # Cargar el dataset
 @st.cache_data
 def load_data():
-    data = pd.read_csv("../streamlit/jokes_df.csv")  # Ruta del archivo
+    data = pd.read_csv("jokes_df.csv")  # Ruta del archivo
     return data
 
 
