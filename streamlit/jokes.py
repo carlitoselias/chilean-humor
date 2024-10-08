@@ -19,6 +19,10 @@ nltk.download("stopwords")
 # Función para limpiar y procesar el texto con stopwords adicionales y longitud mínima de palabra
 def clean_text(text, extra_stopwords, min_word_length):
     text = text.lower()  # Convertir a minúsculas
+
+    # Usar expresiones regulares para eliminar los signos de apertura y cierre de interrogación y exclamación
+    text = re.sub(r"[¿¡]", "", text)
+
     text = "".join(
         [char for char in text if char not in string.punctuation]
     )  # Quitar puntuación
