@@ -1,3 +1,4 @@
+import os
 import re
 import string
 from collections import Counter
@@ -61,7 +62,16 @@ def generate_wordcloud(text):
 # Cargar el dataset
 @st.cache_data
 def load_data():
-    data = pd.read_csv("jokes_df.csv")  # Ruta del archivo
+    # Obtener la ruta absoluta del archivo CSV
+    current_dir = os.path.dirname(
+        os.path.abspath(__file__)
+    )  # Directorio actual del script
+    file_path = os.path.join(
+        current_dir, "jokes_df.csv"
+    )  # Ruta completa al archivo CSV
+
+    # Cargar los datos
+    data = pd.read_csv(file_path)
     return data
 
 
