@@ -254,7 +254,7 @@ def main():
 
         # Botón para descargar CSV
         st.download_button(
-            label="Descargar lista de palabras con frecuencias",
+            label="Descargar lista de palabras con su frecuencia",
             data=word_df.to_csv(index=False, encoding="utf-8"),
             file_name="frecuencia_palabras.csv",
             mime="text/csv",
