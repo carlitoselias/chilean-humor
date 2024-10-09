@@ -12,7 +12,6 @@ from wordcloud import WordCloud
 
 import streamlit as st
 
-#
 # Verifica si los stopwords están descargados; si no, los descarga.
 try:
     stopwords.words("spanish")
@@ -113,7 +112,7 @@ def generate_altair_bar_chart(df_common_words):
 
 # Función principal de la app
 def main():
-    st.title("Una mirada al humor en el Festival Internacional de Viña del Mar 😄")
+    st.title("Una mirada al humor en el Festival Internacional de Viña del Ma r 😄")
 
     # Inicializar el estado de session_state
     initialize_session_state()
