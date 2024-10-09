@@ -12,6 +12,7 @@ from wordcloud import WordCloud
 
 import streamlit as st
 
+#
 # Verifica si los stopwords están descargados; si no, los descarga.
 try:
     stopwords.words("spanish")
