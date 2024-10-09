@@ -12,8 +12,11 @@ from wordcloud import WordCloud
 
 import streamlit as st
 
-# Descargar stopwords de nltk si es necesario
-nltk.download("stopwords")
+# Verifica si los stopwords están descargados; si no, los descarga.
+try:
+    stopwords.words("spanish")
+except LookupError:
+    nltk.download("stopwords")
 
 
 # Función para limpiar y procesar el texto con stopwords adicionales y longitud mínima de palabra
